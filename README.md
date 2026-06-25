@@ -57,6 +57,7 @@ MoneyHorst / Portfolio OS ist eine konzeptuelle Portfolio-Intelligence- und Rese
 - Konfidenz- und Evidenz-Modell
 - Platform Control Map & Functional Heatmap Monitoring
 - Language Intelligence Governance — Architecture Summary
+- User Identity / Account / Profile — Architecture Summary
 
 ### `docs/research-graph/`
 - Research-Graph Deep-Dive-Überblick
