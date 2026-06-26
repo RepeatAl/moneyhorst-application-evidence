@@ -1,8 +1,8 @@
 # MoneyHorst — User Identity / Account / Profile Architecture Summary
 
 > **Spec**: moneyhorst-user-identity-account-profile
-> **Phase**: Requirements complete — ready for design
-> **Date**: 2026-06-25
+> **Phase**: Task execution in progress — Tasks 1–12 of 14 complete
+> **Date**: 2026-06-26
 > **Status**: Documentation-only architecture specification
 > **Implementation Authorized**: NO
 > **Public-Safe**: YES — no user data, no holdings, no credentials
@@ -11,146 +11,131 @@
 
 ## Overview
 
-This spec defines the architecture boundaries for user identity, account, and profile within MoneyHorst. It establishes what these concepts mean, where preferences live, how account lifecycle works, and how external portfolio import fits as a core profile capability — all without implementing anything.
+This spec defines the architecture boundaries for user identity, account, and profile within MoneyHorst — including external portfolio import as a core profile/account capability. It is the sixth MoneyHorst architecture spec to reach task execution and unblocks six downstream specs.
 
-This is the sixth MoneyHorst architecture spec to reach requirements completion. It unblocks six downstream specs (onboarding, dashboard, roles/permissions, CRM, notifications, subscriptions).
+67 requirements (hardened). 14 tasks (11 complete). 10 architecture boundary artifacts produced. Zero runtime code.
 
 ---
 
-## What This Spec Defines
+## Architecture Boundaries
 
 ### Identity Boundary
-
-Identity answers: "Who is this actor in the system?"
-
-- Stable, canonical, system-internal identifier (not email, not username)
-- Actor types: human user, system agent, service identity
-- Provider-agnostic authentication reference
-- Identity state machine: active → suspended → deactivated
-- Identity is NOT preferences, NOT permissions, NOT profile data
+- Canonical actor record: stable system-internal ID, actor type, auth reference, state
+- Independent of auth provider, email, or display name
+- State machine: ACTIVE → SUSPENDED → DEACTIVATED
+- Identity contains ONLY: ID, type, auth ref, timestamp, state
 
 ### Account Boundary
-
-Account answers: "What is the operational container for this identity?"
-
-- Account lifecycle: PENDING → ACTIVE → SUSPENDED → DEACTIVATED
-- Account owns: subscription reference, governance authority level
-- Account deactivation preserves all governance artifacts and data integrity
-- Reactivation requires explicit human CTO override
+- Operational container: lifecycle state, subscription reference, authority level
+- Lifecycle: PENDING → ACTIVE → SUSPENDED → DEACTIVATED
+- Deactivation preserves all data; reactivation requires CTO override
+- Account does NOT contain preferences or profile data
 
 ### Profile Boundary
-
-Profile answers: "What are this user's preferences and personalizations?"
-
-- Language preferences (UI, reports, communication — three independent preferences)
-- Locale preference (dates, numbers, currency formatting — independent from language)
-- Timezone preference
-- Notification preferences
-- Imported portfolio records (Bestandportfolio)
-
-### Core Rule: Preferences Are Never Authority
-
-Changing any profile preference (language, locale, timezone) NEVER alters governance state, portfolio truth, evidence meaning, or system authority. Preferences control the rendering layer only.
+- Preferences and personalizations: language, locale, timezone, notifications, portfolios
+- Rendering-layer only — never authority
+- Includes imported portfolio records (Bestandportfolio)
 
 ---
 
-## External Portfolio Import — Architecture Boundary
+## Core Governance Rules
 
-Portfolio import is a core profile/account capability:
-
-- Users can upload portfolio exports from external brokers, banks, asset managers, or spreadsheets
-- Supported formats (CSV, XLSX, PDF, broker-specific) remain open decisions
-- Uploaded files are classified as sensitive financial data (encrypted storage required)
-- Imported holdings pass through asset identity normalization (ticker, ISIN, WKN, exchange, currency, asset type, sector classification)
-- Ambiguous or unresolved assets are NEVER silently assumed — user confirmation is mandatory
-- Only after explicit user confirmation do imported holdings become canonical portfolio data
-- Users assign labels to portfolios (e.g., "Main Portfolio", "Broker Portfolio", "Bestandportfolio")
-- Future reports clearly distinguish imported Bestandportfolio from watchlist assets, simulated allocations, and research recommendations
-
-### What Portfolio Import Does NOT Do
-
-- Does NOT generate buy/sell/hold recommendations
-- Does NOT trigger trading signals or execution instructions
-- Does NOT authorize autonomous action of any kind
-- Does NOT implement parsers, storage, APIs, or UI
-- Reports referencing imported portfolios remain classified as RESEARCH_DRAFT
+| Rule | Description |
+|------|-------------|
+| Preferences are never authority | Changing language/locale/timezone NEVER alters governance state |
+| Language/locale is rendering-only | Display changes only — no canonical value mutation |
+| Portfolio import does not authorize action | Bestandportfolio is factual context, not trading signal |
+| Reports remain RESEARCH_DRAFT | Portfolio-aware reports preserve research-only classification |
+| No silent assumption of asset identity | Confidence < HIGH requires explicit user confirmation |
+| User confirmation is the hard gate | No imported asset becomes canonical without user action |
+| Agent access defaults to NONE | Purpose-scoped, temporary, auditable grants only |
+| Human CTO authority is final | No AI, automation, or workflow may override |
 
 ---
 
-## Language Preference Ownership
+## External Portfolio Import (Architecture Boundary Only)
 
-This spec resolves Language Intelligence Governance Open Question #3: "Where is per-user language preference stored?"
+- Core profile/account capability (architecture decision resolved)
+- Flow: Upload → Extract → Normalize → User Review → Confirm/Reject → Report-Ready Bestandportfolio
+- File lifecycle: 9 states including FAILED, REJECTED, DELETED, EXPIRED
+- Asset normalization: ticker, ISIN, WKN, exchange, currency, asset type, sector, duplicates
+- Confidence levels: HIGH / MEDIUM / LOW / NONE
+- User confirmation: hard gate — no bypass, no agent canonicalization, no time-based acceptance
+- Privacy: sensitive financial data classification, encryption required, no external sharing
+- Parser/storage/runtime/UI implementation NOT authorized — deferred to future specs
 
-**Answer:** Language preferences are Profile-layer attributes owned by this spec's domain.
+---
 
-| Preference | Scope | Governance |
-|-----------|-------|-----------|
-| User Language Preference | Platform UI display | Language Intelligence Governance R8 |
-| Report Language Preference | Research report rendering | Language Intelligence Governance R9 |
-| Communication Language Preference | Notifications, CRM, support | Language Intelligence Governance R10 |
-| Locale Preference | Date/number/currency formatting | Language Intelligence Governance R14 |
+## Agent Access and Privacy
+
+- Default agent access to ALL profile and portfolio data: NONE
+- Temporary extraction access: purpose-scoped READ only during active extraction, immediately revoked
+- No persistent agent access permitted
+- No agent may write, modify, delete, or canonicalize profile/portfolio data
+- All access grants must be: explicit, purpose-scoped, documented, revocable, auditable, temporary
 
 ---
 
 ## Downstream Specs Unblocked
 
-| Downstream Spec | What It Consumes From Identity |
-|----------------|-------------------------------|
-| User Onboarding Journey | Identity creation, initial preferences, PENDING → ACTIVE |
+| Spec | What It Consumes |
+|------|-----------------|
+| User Onboarding Journey | Identity creation, account initial state, preference defaults |
 | Dashboard / Account Home | Profile for personalization, account state for UI gating |
-| Roles / Permissions / Access | Identity as permission subject, role attachment model |
+| Roles / Permissions / Access | Identity as permission subject, account as container |
 | CRM / Support | Customer identity, communication language preference |
-| Notifications / Communication | User preferences, delivery language, account eligibility |
-| Subscription / Plan Governance | Account as subscription holder, lifecycle for eligibility |
+| Notifications / Communication | Delivery preferences, account eligibility |
+| Subscription / Plan | Account as holder, lifecycle for eligibility |
 
 ---
 
-## Open Decisions (High-Level Summary)
+## Open Decisions
 
-| Area | Key Unresolved Decisions |
-|------|------------------------|
-| Identity provider | Auth provider not selected (architecture is provider-agnostic) |
-| Profile storage | Database/storage technology not committed |
-| File format support | Which formats supported first (CSV/XLSX/PDF) undecided |
-| Raw file storage | Where uploaded files are stored — undecided |
-| Retention policy | How long raw files and extracted data are retained — undecided |
-| Asset resolution | Confidence threshold for automatic mapping — undecided |
-| Multi-user timeline | When CTO-only expands to additional roles — deferred |
-
-Total: 28 unresolved decisions tracked for design phase resolution.
+- **Total**: 29 decisions tracked
+- **Resolved**: 1 (portfolio import is core profile capability)
+- **Deferred**: 1 (multi-user timeline)
+- **Unresolved**: 27 (block future implementation specs)
+- **Critical blockers**: Auth provider selection, profile storage technology
+- All decisions require explicit CTO resolution — no inference, no time-based resolution
 
 ---
 
 ## Governance Statement
 
-- **No implementation authorized** — this spec defines architecture boundaries only
-- **No runtime code, no parsers, no storage, no APIs, no UI** created by this spec
-- **Portfolio import does not authorize action** — importing holdings is factual data capture, never recommendation
-- **Reports remain RESEARCH_DRAFT** — portfolio-aware reports preserve research-only classification
-- **MoneyHorst does not generate autonomous investment decisions** — all final decisions remain under human CTO authority
-- **Human decision authority is final** — no AI system, automation, or workflow may override human governance
-
----
-
-## Requirements Summary
-
-- 62 formal requirements (R1–R62)
-- 10 correctness properties
-- Full traceability to preflight and upstream specs
-- EARS-style format with acceptance criteria
-- Explicit prohibited actions (no implementation, no trading, no SAI mutation)
+- **No implementation authorized** — architecture contracts only
+- **No runtime code, parsers, storage, APIs, UI, auth, or databases** created
+- **Portfolio import does not authorize action** — factual data capture only
+- **Reports remain RESEARCH_DRAFT** — no upgrade from portfolio import
+- **MoneyHorst does not generate autonomous investment decisions**
+- **Human decision authority remains final** — no AI override permitted
+- **NO_IMPLEMENTATION_AUTHORIZED preserved** throughout all artifacts
 
 ---
 
 ## Lifecycle Status
 
 ```
-preflight   ✓ COMPLETE (CTO approved 2026-06-25)
-requirements ✓ COMPLETE (62 requirements, ready for design)
-design       — NOT STARTED
-tasks        — NOT STARTED
-implementation — NOT AUTHORIZED
+preflight        ✓ COMPLETE
+requirements     ✓ COMPLETE (67 requirements, hardened)
+design           ✓ COMPLETE
+tasks            ✓ CREATED (14 tasks)
+task execution   IN PROGRESS — Tasks 1–12 complete, Tasks 13–14 pending
+implementation   NOT AUTHORIZED
 ```
+
+---
+
+## Public-Safe Limitation
+
+This document contains NO:
+- User portfolio holdings or positions
+- WKN/ISIN/ticker data from any user portfolio
+- Broker or account information
+- Credentials or secrets
+- Implementation details or runtime configuration
+- Private repository history
+
+Architecture and governance boundaries only.
 
 ---
 
