@@ -13,7 +13,7 @@
 
 This spec defines the architecture boundaries for user identity, account, and profile within MoneyHorst — including external portfolio import as a core profile/account capability. It is the sixth MoneyHorst architecture spec to reach task execution and unblocks six downstream specs.
 
-67 requirements (hardened). 14 tasks (11 complete). 10 architecture boundary artifacts produced. Zero runtime code.
+67 requirements (hardened). 14 tasks (12 complete). 10 architecture boundary artifacts produced. Zero runtime code.
 
 ---
 
